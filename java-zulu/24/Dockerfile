@@ -60,9 +60,9 @@ LABEL       org.opencontainers.image.source="https://github.com/pterodactyl/yolk
 LABEL       org.opencontainers.image.licenses=MIT
 
 # Changes made here:
-# - Added libjemalloc-dev and graphviz, to provide access to the jeprof command (graphviz is a dependency of jeprof)
+# - jeprof is copied from the jemalloc build so it matches the library, binutils lets it resolve symbols and graphviz draws the graphs
 RUN apt-get update -y && \
-    apt-get install -y --no-install-recommends screen procps libjemalloc-dev graphviz lsof curl ca-certificates openssl git tar sqlite3 fontconfig libfreetype6 tzdata iproute2 numactl libstdc++6 && \
+    apt-get install -y --no-install-recommends screen procps perl binutils graphviz lsof curl ca-certificates openssl git tar sqlite3 fontconfig libfreetype6 tzdata iproute2 numactl libstdc++6 && \
     useradd -d /home/container -m container && \
     rm -rf /var/lib/apt/lists/*
 
@@ -77,6 +77,7 @@ WORKDIR /home/container/
 
 # Changes: Copy compiled libjemalloc.so file to final image.
 COPY --from=builder /usr/local/lib/libjemalloc.so* /usr/local/lib/
+COPY --from=builder /usr/local/bin/jeprof /usr/local/bin/jeprof
 COPY scripts/jemalloc.sh /entrypoint.sh
 
 CMD ["/bin/bash", "/entrypoint.sh"]

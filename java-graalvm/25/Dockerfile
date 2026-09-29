@@ -44,11 +44,11 @@ LABEL org.opencontainers.image.source="https://github.com/pterodactyl/yolks"
 LABEL org.opencontainers.image.licenses=MIT
 
 # Changes made here:
-# - Added libjemalloc-dev and graphviz, to provide access to the jeprof command (graphviz is a dependency of jeprof)
-# We install the EPEL repository to have access to jeprof.
+# - jeprof is copied from the jemalloc build so it matches the library, binutils lets it resolve symbols and graphviz draws the graphs
+# We install the EPEL repository for some of the packages below.
 RUN microdnf install -y epel-release && \
     microdnf update && \
-    microdnf install -y procps-ng curl jemalloc-devel graphviz ca-certificates openssl git tar sqlite fontconfig tzdata iproute gcc gcc-c++ freetype libstdc++ lsof numactl glibc glibc-locale-source glibc-langpack-en && \
+    microdnf install -y procps-ng curl perl binutils graphviz graphviz-gd ca-certificates openssl git tar sqlite fontconfig tzdata iproute gcc gcc-c++ freetype libstdc++ lsof numactl glibc glibc-locale-source glibc-langpack-en && \
     microdnf clean all && \
     adduser --home-dir /home/container container
 
@@ -63,6 +63,7 @@ WORKDIR /home/container/
 
 # Changes: Copy compiled libjemalloc.so file to final image.
 COPY --from=builder /usr/local/lib/libjemalloc.so* /usr/local/lib/
+COPY --from=builder /usr/local/bin/jeprof /usr/local/bin/jeprof
 COPY scripts/jemalloc.sh /entrypoint.sh
 
 CMD ["/bin/bash", "/entrypoint.sh"]

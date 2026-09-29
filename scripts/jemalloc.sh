@@ -66,7 +66,8 @@ if [ "$DUMPS_ENABLED" = "true" ]; then
             # loop through heapdump files
             for heapfile in dumps/*.heap; do
                 if [ -f "$heapfile" ]; then
-                    basefilename="${heapfile%.heap}"
+                    # just the file name, heapfile already starts with dumps/
+                    basefilename="$(basename "${heapfile%.heap}")"
                     
                     timestamp=$(date +"%d.%m.%y-%H:%M:%S")
                     
@@ -74,12 +75,17 @@ if [ "$DUMPS_ENABLED" = "true" ]; then
                     
                     mkdir -p "$(dirname "$gif_output")"
                     
-                    jeprof --show_bytes --maxdegree=20 --nodefraction=0 --edgefraction=0 --gif \
+                    # jeprof exits 0 even when graphviz can't draw the gif, so an empty file counts as failed too
+                    if jeprof --show_bytes --maxdegree=20 --nodefraction=0 --edgefraction=0 --gif \
                         /opt/java/openjdk/bin/java \
-                        "$heapfile" > "$gif_output"
-                    
-                    # Remove processed heap file
-                    rm "$heapfile"
+                        "$heapfile" > "$gif_output" && [ -s "$gif_output" ]; then
+                        # Remove processed heap file
+                        rm "$heapfile"
+                    else
+                        # keep the heap so it can be looked at by hand, and stop retrying it every minute
+                        rm -f "$gif_output"
+                        mv "$heapfile" "$heapfile.failed"
+                    fi
                 fi
             done
             

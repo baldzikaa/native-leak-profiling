@@ -63,14 +63,14 @@ LABEL       org.opencontainers.image.source="https://github.com/pterodactyl/yolk
 LABEL       org.opencontainers.image.licenses=MIT
 
 # Changes made here:
-# - Added libjemalloc-dev and graphviz, to provide access to the jeprof command (graphviz is a dependency of jeprof)
+# - jeprof is copied from the jemalloc build so it matches the library, binutils lets it resolve symbols and graphviz draws the graphs
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends ca-certificates curl && \
     mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://apt.corretto.aws/corretto.key -o /etc/apt/keyrings/corretto.asc && \
     echo "deb [signed-by=/etc/apt/keyrings/corretto.asc] https://apt.corretto.aws stable main" > /etc/apt/sources.list.d/corretto.list && \
     apt-get update -y && \
-    apt-get install -y --no-install-recommends java-24-amazon-corretto-jdk screen procps libjemalloc-dev graphviz lsof openssl git tar sqlite3 fontconfig libfreetype6 tzdata iproute2 numactl libstdc++6 && \
+    apt-get install -y --no-install-recommends java-24-amazon-corretto-jdk screen procps perl binutils graphviz lsof openssl git tar sqlite3 fontconfig libfreetype6 tzdata iproute2 numactl libstdc++6 && \
     useradd -d /home/container -m container && \
     rm -rf /var/lib/apt/lists/*
 
@@ -88,6 +88,7 @@ WORKDIR /home/container/
 
 # Changes: Copy compiled libjemalloc.so file to final image.
 COPY --from=builder /usr/local/lib/libjemalloc.so* /usr/local/lib/
+COPY --from=builder /usr/local/bin/jeprof /usr/local/bin/jeprof
 COPY scripts/jemalloc.sh /entrypoint.sh
 
 CMD ["/bin/bash", "/entrypoint.sh"]
